@@ -1,0 +1,155 @@
+Anschluss an WLAN UART:
+  braun  - GND
+  orange - RX (von Inneneinheit)
+  blau   - TX (von WLAN Modul)
+  rot    - +5VDC
+
+# HEADER:  tel[0:2] "7e 7e"
+# LENGTH:  tel[2:3] "2f"   - länge bytes [2:-1]
+# TYPE?:   tel[3:4] "34"
+# PAYLOAD: tel[4:-1]
+# CRC:     tel[-1:] - crc Berechnung: (Summe Bytes tel[2:-1]) % 256
+
+hier daten ohne header + length + crc
+
+# TELEGRAMM TYPE: "31"
+ b'3100004000009002020000000000000000000008000000000000000000000000000000000000000000000042000000'
+
+data[0]  - "31" - Telegram Type
+
+data[1]  - Anlage Zustand:
+            bit 0 - unbekannt
+            bit 1 - unbekannt       
+            bit 2 - 1=Anlage an, 0=StandBy (auch wenn an über Timer)
+            bit 3 - unbekannt
+            bit 4 - unbekannt
+            bit 5 - unbekannt 
+            bit 6 - unbekannt
+            bit 7 - unbekannt
+        
+data[2]  - "00"
+data[3]  - "40" - unbekannt - immer 0x40
+data[4]  - "00"
+
+data[5]  - Mode und Fan-Speed
+           bit 0, bit 1 - Fan Modus
+               0 = auto
+               1 = Speed 1
+               2 = Speed 2
+               3 = Speed 3
+           bit 2 - unbekannt
+           bit 3 - unbekannt
+           bit 4, bit 5, bit 6 - Modus
+               0 = Umluft
+               1 = Kühlen
+               2 = Entfeuchten
+               3 = Lüften
+               4 = Heizen
+           bit 7 - Inneneinheit ON/OFF
+
+data[6]  - Temperatur Vorgabe + onoff-Timer Zustand; 
+               0x = 16°C
+               1x = 17°C
+               2x = 18°C
+               3x = 19°C
+               4x = 20°C
+               5x = 21°C
+               6x = 22°C
+               7x = 23°C
+               8x = 24°C
+               9x = 25°C
+               ax = 26°C
+               bx = 27°C
+               cx = 28°C
+               dx = 29°C
+               ex = 30°C
+            Funktioniert nicht richtig, nur inaktiv oder 0xc
+               xd = off oder onoff aktiv
+               x0 = timer inaktiv
+               xc = on aktiv
+               
+data[7]  - Status Turbo, Licht, Modus
+            bit 0 - Turbo ON / OFF
+            bit 1 - Display ON/OFF
+            bit 2 - Inneneinheit ON/OFF
+            bit 3 - Heizbetrieb ON/ andere Betriebsart
+            bit 4 - unbekannt
+            bit 5 - unbekannt
+            bit 6 - unbekannt
+
+data[8]  - "02" - unbekannt - immer 0x02
+
+data[9]  - Lamellensteuerung
+            bit 0 - unbekannt
+            bit 1 - unbekannt
+            bit 2 - unbekannt
+            bit 3 - unbekannt
+            bit 4, bit 5, bit 6, bit 7 - Swing Mode:
+                0 - stopped 
+                1 - bewegung ganzer bereich
+                2 - position oben 
+                3 - position mitte/oben 
+                4 - position mitte 
+                5 - position mitte/unten 
+                6 - position unten
+                7 - bewegung bereich unten
+                9  - bewegung bereich mitte
+                11 - bewegung bereich oben 
+            
+data[10] - Temperaturanzeige Display Inneneinheit Auswahl:
+           erscheint bei Haus innen für 2 sek, dann zurück
+            bit 0 - unbekannt
+            bit 1 - unbekannt
+            bit 2 - unbekannt
+            bit 3 - unbekannt
+            bit 4, bit 5
+                0 = Haus weg
+                1 = Haus leer
+                2 = Haus innen
+                3 = Haus aussen
+            bit 6 - unbekannt
+            bit 7 - unbekannt
+data[11] - "00"
+data[12] - "00"
+data[13] - Timer Coutner Byte1 (für on-Funktion)
+data[14] - Timer Counter Byte2 (für on, off und onoff), 80 - timer deaktiviert
+data[15] - Timer Counter Byte3 (für off-Funktion)
+
+data[16] - Timer aktivierung
+            00 - timer deaktiviert
+            10 - timer off aktiv
+            20 - timer on aktiv
+            30 - timer onoff aktiv
+data[17] - "00"
+data[18] - "00"
+data[19] - "08" fan auto| 09 fan1| 0b fan2 | 0d fan3
+data[20] - "00"
+data[21] - "00"
+data[22] - "00"
+data[23] - "00"
+
+data[24] - "00"
+data[25] - "00"
+data[26] - "00"
+data[27] - "00"
+data[28] - "00"
+data[29] - "00"
+data[30] - "00"
+data[31] - "00"
+
+data[32] - "00"
+data[33] - "00"
+data[34] - "00"
+data[35] - "00"
+data[36] - "00"
+data[37] - "00"
+data[38] - "00"| "08" wenn IR FB Betätigt für ca 1 Sekunde
+data[39] - "00"
+
+data[40] - "00"
+data[41] - "00"
+data[42] - "00"
+data[43] - "42" Innentemperatur minus offset 40
+data[44] - "00"
+data[45] - "00"
+data[46] - "00"
