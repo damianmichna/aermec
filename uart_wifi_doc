@@ -10,12 +10,15 @@ Anschluss an WLAN UART:
 # PAYLOAD: tel[4:-1]
 # CRC:     tel[-1:] - crc Berechnung: (Summe Bytes tel[2:-1]) % 256
 
+#########################################################
 hier daten ohne header + length + crc
 
-# TELEGRAMM TYPE: "31"
- b'3100004000009002020000000000000000000008000000000000000000000000000000000000000000000042000000'
-
-data[0]  - "31" - Telegram Type
+#########################################################
+# TELEGRAMM TYPE: "31" AC>WIFI 
+b'3100004000009002020000000000000000000008000000000000000000000000000000000000000000000042000000'
+Telegram wird von WIFI angefragt, jede 10 Sekunden
+ 
+data[0]  - "31" - Telegram Type 
 
 data[1]  - Anlage Zustand:
             bit 0 - unbekannt
@@ -27,10 +30,9 @@ data[1]  - Anlage Zustand:
             bit 6 - unbekannt
             bit 7 - unbekannt
         
-data[2]  - "00"
+data[2]  - "00" - unbekannt 
 data[3]  - "40" - unbekannt - immer 0x40
-data[4]  - "00"
-
+data[4]  - "00" - unbekannt 
 data[5]  - Mode und Fan-Speed
            bit 0, bit 1 - Fan Modus
                0 = auto
@@ -48,6 +50,8 @@ data[5]  - Mode und Fan-Speed
            bit 7 - Inneneinheit ON/OFF
 
 data[6]  - Temperatur Vorgabe + onoff-Timer Zustand; 
+           wird Mode geändert, ändert es sich hier auch auf
+           den letzten Wert von jeweiligen Modus 
                0x = 16°C
                1x = 17°C
                2x = 18°C
@@ -68,6 +72,7 @@ data[6]  - Temperatur Vorgabe + onoff-Timer Zustand;
                x0 = timer inaktiv
                xc = on aktiv
                
+               
 data[7]  - Status Turbo, Licht, Modus
             bit 0 - Turbo ON / OFF
             bit 1 - Display ON/OFF
@@ -79,7 +84,7 @@ data[7]  - Status Turbo, Licht, Modus
 
 data[8]  - "02" - unbekannt - immer 0x02
 
-data[9]  - Lamellensteuerung
+data[9]  - Swing steuerung
             bit 0 - unbekannt
             bit 1 - unbekannt
             bit 2 - unbekannt
@@ -103,10 +108,10 @@ data[10] - Temperaturanzeige Display Inneneinheit Auswahl:
             bit 2 - unbekannt
             bit 3 - unbekannt
             bit 4, bit 5
-                0 = Haus weg
-                1 = Haus leer
-                2 = Haus innen
-                3 = Haus aussen
+            0 = Haus weg
+            1 = Haus leer
+            2 = Haus innen
+            3 = Haus aussen
             bit 6 - unbekannt
             bit 7 - unbekannt
 data[11] - "00"
@@ -143,7 +148,7 @@ data[34] - "00"
 data[35] - "00"
 data[36] - "00"
 data[37] - "00"
-data[38] - "00"| "08" wenn IR FB Betätigt für ca 1 Sekunde
+data[38] - "00"| "80" wenn IR FB Betätigt für ca 1 Sekunde
 data[39] - "00"
 
 data[40] - "00"
@@ -153,3 +158,162 @@ data[43] - "42" Innentemperatur minus offset 40
 data[44] - "00"
 data[45] - "00"
 data[46] - "00"
+
+########################################################
+# TELEGRAMM TYPE: "33" AC>WIFI
+b'33040040000920190a00100014175b080800000000000000000400000d0000000000000000000000000000000000'
+Telegram wird von WIFI angefragt, jede 10 Sekunden
+
+data[0]  - "33" - Telegram Type
+data[1]  - "04" - wenn AC an, 00 wenn AC aus
+data[2]  - "00"
+data[3]  - "40"
+data[4]  - "00"
+data[5]  - "09"
+data[6]  - "20"
+data[7]  - "19"
+data[8]  - "0a" 
+data[9]  - "00"
+data[10]  - "10"
+data[11]  - "00"
+data[12]  - "14"
+data[13]  - "17"
+data[14]  - "5b"
+data[15]  - "08"
+data[16]  - "08" 
+data[17]  - "00"
+data[18]  - "00"
+data[19]  - "08"
+data[20]  - "00"
+data[21]  - "00"
+data[22]  - "00"
+data[23]  - "00"
+data[24]  - "00" 
+data[25]  - "04"
+data[26]  - "00"
+data[27]  - "00"
+data[28]  - "0d"
+data[29]  - "00"
+data[30]  - "00"
+data[31]  - "00"
+data[32]  - "00" 
+data[33]  - "00"
+data[34]  - "00"
+data[35]  - "00"
+data[36]  - "00"
+data[37]  - "00"
+data[38]  - "00"
+data[39]  - "00"
+data[40]  - "00" 
+data[41]  - "00"
+data[42]  - "00"
+data[43]  - "00"
+data[44]  - "00"
+data[45]  - "00"
+
+
+     
+################################################
+# TELEGRAMM TYPE: "34" AC>WIFI
+b'34040040001001084140004101000000000000000000000000000700000000000000000000000000000000000000'
+Telegram wird von WIFI angefragt, jede 10 Sekunden
+
+data[0]   - "34" - Telegram Type
+data[1]   - "04" - wenn AC an, 00 wenn AC aus
+data[2]   - "00"  
+data[3]   - "40" - unbekannt, immer 40 
+data[4]   - "00"  
+data[5]   - "10" - unbekannt, Werte: 04 14 02
+data[6]   - "01" - unbekannt, Werte: 80 00 80
+data[7]   - "08" - unbekannt, Werte: 08 28 20
+data[8]   - Soll-Temperatur, offset minus 40 
+data[9]   - Raum-Temperatur, offset minus 40
+data[10]  - "00" 
+data[11]  - Gas-Temperatur, offset minus 40
+data[12]  - "01" - unbekannt, Werte: 00, 07
+data[13]  - "00"
+data[14]  - "00" 
+data[15]  - "00" 
+data[16]  - "00" 
+data[17]  - "00"
+data[18]  - "00"
+data[19]  - "00" 
+data[20]  - "00"
+data[21]  - "00" - unbekannt, Werte: 08, 00
+data[22]  - "00"  
+data[23]  - "00"  
+data[24]  - "00"  
+data[25]  - "00"  
+data[26]  - "07" - unbekannt, Werte: 00, 07 - wenn Heizungsmodus 
+data[27]  - "00"  
+data[28]  - "00"   
+data[29]  - "00"   
+data[30]  - "00" 
+data[31]  - "00" 
+data[32]  - "00"  
+data[33]  - "00"  
+data[34]  - "00"  
+data[35]  - "00"  
+data[36]  - "00"  
+data[37]  - "00"  
+data[38]  - "00"  
+data[39]  - "00"  
+data[40]  - "00"  
+data[41]  - "00"  
+data[42]  - "00"  
+data[43]  - "00"  
+data[44]  - "00"  
+data[45]  - "00"  
+
+
+########################################################
+# TELEGRAMM TYPE: "35" AC>WIFI
+b'350400400000000000000096000036373b0000000000000000000000000000000000000000000000000000000000'
+Telegram wird von WIFI angefragt, jede 10 Sekunden
+ 
+data[0]   - "35" - Telegram Type
+data[1]   - "04" - wenn AC an, 00 wenn AC aus
+data[2]   - "00"  
+data[3]   - "40" - unbekannt, immer 40 
+data[4]   - "00"  
+data[5]   - "00" - unbekannt, Werte: 01, 11
+data[6]   - "00"  
+data[7]   - "00" 
+data[8]   - "00"   
+data[9]   - "00"  
+data[10]  - "00"  
+data[11]  - "96" - unbekannt, Werte: 6e 64 74 8e 96
+data[12]  - "00" 
+data[13]  - "00"  
+data[14]  - Aussentemperatur, offset minus 40
+data[15]  - Liquid-Temperatur, offset minus 40
+data[16]  - Abluft-Temperatur, offset minus 40
+data[17]  - "00" 
+data[18]  - "00" 
+data[19]  - "00" 
+data[20]  - "00" 
+data[21]  - "00" 
+data[22]  - "00" 
+data[23]  - "00" 
+data[24]  - "00" 
+data[25]  - "00" 
+data[26]  - "00" 
+data[27]  - "00" 
+data[28]  - "00" 
+data[29]  - "00" 
+data[30]  - "00" 
+data[31]  - "00" 
+data[32]  - "00" 
+data[33]  - "00" 
+data[34]  - "00"  
+data[35]  - "00" 
+data[36]  - "00"  
+data[37]  - "00" 
+data[38]  - "00" 
+data[39]  - "00"  
+data[40]  - "00" 
+data[41]  - "00" 
+data[42]  - "00" 
+data[43]  - "00"  
+data[44]  - "00"  
+data[45]  - "00"  
