@@ -15,8 +15,8 @@ hier daten ohne header + length + crc
 
 #########################################################
 # TELEGRAMM TYPE: "31" AC>WIFI 
-b'3100004000009002020000000000000000000008000000000000000000000000000000000000000000000042000000'
-Telegram wird von WIFI angefragt, jede 10 Sekunden
+data = '3100004000009002020000000000000000000008000000000000000000000000000000000000000000000042000000'
+Telegram wird von WIFI angefragt, jede 3 x pro Sekunde
  
 data[0]  - "31" - Telegram Type 
 
@@ -33,20 +33,21 @@ data[1]  - Anlage Zustand:
 data[2]  - "00" - unbekannt 
 data[3]  - "40" - unbekannt - immer 0x40
 data[4]  - "00" - unbekannt 
+
 data[5]  - Mode und Fan-Speed
            bit 0, bit 1 - Fan Modus
-               0 = auto
-               1 = Speed 1
-               2 = Speed 2
-               3 = Speed 3
+                 0 = auto
+                 1 = Speed 1
+                 2 = Speed 2
+                 3 = Speed 3
            bit 2 - unbekannt
-           bit 3 - unbekannt
+           bit 3 - Sleep Function ON/OFF (nur bei Heizen und Kühlen möglich)
            bit 4, bit 5, bit 6 - Modus
-               0 = Umluft
-               1 = Kühlen
-               2 = Entfeuchten
-               3 = Lüften
-               4 = Heizen
+                 0 = Auto
+                 1 = Kühlen
+                 2 = Entfeuchten
+                 3 = Lüften
+                 4 = Heizen
            bit 7 - Inneneinheit ON/OFF
 
 data[6]  - Temperatur Vorgabe + onoff-Timer Zustand; 
@@ -71,25 +72,39 @@ data[6]  - Temperatur Vorgabe + onoff-Timer Zustand;
                xd = off oder onoff aktiv
                x0 = timer inaktiv
                xc = on aktiv
-               
-               
+               x8 = timer aktiv 
+
 data[7]  - Status Turbo, Licht, Modus
             bit 0 - Turbo ON / OFF
             bit 1 - Display ON/OFF
             bit 2 - Inneneinheit ON/OFF
-            bit 3 - Heizbetrieb ON/ andere Betriebsart
+            bit 3 - Verlängerte Ventilation, automatisch bei Heizbetrieb
             bit 4 - unbekannt
             bit 5 - unbekannt
             bit 6 - unbekannt
 
-data[8]  - "02" - unbekannt - immer 0x02
+data[8]   - Fahrenheit/Celsius
+             bit 0 - unbekannt
+             bit 1 - unbekannt, immer 1
+             bit 2 - unbekannt
+             bit 3 - unbekannt
+             bit 4 - unbekannt
+             bit 5 - unbekannt
+             bit 6 - unbekannt
+             bit 7 - Celsius = 0; Fahrenheit = 1             
+            #"02" - unbekannt, nach rücksetzen 00
 
-data[9]  - Swing steuerung
-            bit 0 - unbekannt
-            bit 1 - unbekannt
-            bit 2 - unbekannt
-            bit 3 - unbekannt
-            bit 4, bit 5, bit 6, bit 7 - Swing Mode:
+data[9]  - Lamellen Steuerung
+            bit 0, bit 1, bit 2, bit 3 - Vertical Swing Mode:
+                0 - stopped 
+                1 - bewegung ganzer bereich
+                2 - position 1 
+                3 - position 2
+                4 - position 3
+                5 - position 4
+                6 - position 5
+                # nicht bei jeder Anlage gleich  
+            bit 4, bit 5, bit 6, bit 7 - Vertical Swing Mode:
                 0 - stopped 
                 1 - bewegung ganzer bereich
                 2 - position oben 
@@ -100,6 +115,7 @@ data[9]  - Swing steuerung
                 7 - bewegung bereich unten
                 9  - bewegung bereich mitte
                 11 - bewegung bereich oben 
+                # nicht bei jeder Anlage gleich
             
 data[10] - Temperaturanzeige Display Inneneinheit Auswahl:
            erscheint bei Haus innen für 2 sek, dann zurück
@@ -112,68 +128,118 @@ data[10] - Temperaturanzeige Display Inneneinheit Auswahl:
             1 = Haus leer
             2 = Haus innen
             3 = Haus aussen
-            bit 6 - unbekannt
+            bit 6 - iFeel Funktion aktiviert
+                    # es wird der Temperatursensor in der FB benutzt
+                    # die FB muss zur Klima senden können
             bit 7 - unbekannt
+
 data[11] - "00"
-data[12] - "00"
+
+data[12] - Frostschutz /Sparbetrieb
+             bit 0 - unbekannt
+             bit 1 - unbekannt
+             bit 2 - unbekannt
+             bit 3 - unbekannt
+             bit 4 - unbekannt
+             bit 5 - unbekannt
+             bit 6 - Frostschutz ON/OFF ( wird nur geheizt bei <7°C )
+                     # geht nur im Heizbetrieb
+                     # die Lüfter werden auf AUTO gestellt
+                     # wenn man es im Kühlbetrieb macht, ändert es zwar den Wert
+                     # hier, auf der Fernbedienung wird SE angezeigt, aber wohl
+                     # ohne weiteren Funktion
+                   - Sparbetrieb ON/OFF (nicht im Heizbetrieb)
+             bit 7 - unbekannt
+
 data[13] - Timer Coutner Byte1 (für on-Funktion)
 data[14] - Timer Counter Byte2 (für on, off und onoff), 80 - timer deaktiviert
 data[15] - Timer Counter Byte3 (für off-Funktion)
+           # diese 3 bytes sind schwierig zu entschlüsseln, scheinen als 2 Counter
+           # verteilt auf 3 bytes. Die Counter sind wohl relativ zu Schaltzeit,
+           # da wenn sogar 2tes mal die gleiche zeit abgespeichert wird, ändern
+           # sich die werte.
 
 data[16] - Timer aktivierung
-            00 - timer deaktiviert
-            10 - timer off aktiv
-            20 - timer on aktiv
-            30 - timer onoff aktiv
+             bit 0 - unbekannt
+             bit 1 - unbekannt
+             bit 2 - unbekannt
+             bit 3 - unbekannt
+             bit 4 - timer on aktiv = 1
+             bit 5 - timer off aktiv = 1
+             bit 6 - unbekannt
+             bit 7 - unbekannt
+           # 00 - timer deaktiviert
+           # 10 - timer off aktiv
+           # 20 - timer on aktiv
+           # 30 - timer onoff aktiv
+
 data[17] - "00"
 data[18] - "00"
-data[19] - "08" fan auto| 09 fan1| 0b fan2 | 0d fan3
+
+data[19] - Lüfter Modus
+              08 - auto
+              09 - Stufe 1
+              0b - Stufe 2
+              0d - Stufe 3
+
 data[20] - "00"
 data[21] - "00"
 data[22] - "00"
 data[23] - "00"
-
 data[24] - "00"
-data[25] - "00"
+data[25] - "00", jetzt immer 1b, vielleicht seit wifi registriert?
 data[26] - "00"
 data[27] - "00"
 data[28] - "00"
 data[29] - "00"
 data[30] - "00"
 data[31] - "00"
-
 data[32] - "00"
 data[33] - "00"
 data[34] - "00"
 data[35] - "00"
 data[36] - "00"
 data[37] - "00"
-data[38] - "00"| "80" wenn IR FB Betätigt für ca 1 Sekunde
-data[39] - "00"
 
+data[38] - Signal der IR-Fernbedienung erhalten
+               00 - wenn kein Signal
+               80 - wenn IR FB Betätigt für ca 1 Sekunde
+
+data[39] - "00"
 data[40] - "00"
 data[41] - "00"
 data[42] - "00"
-data[43] - "42" Innentemperatur minus offset 40
+
+data[43] - Temperaturanzeige Display minus offset 40
+           # dachte ich, ist aber nur gleich, wenn "im Haus" 
+
 data[44] - "00"
 data[45] - "00"
 data[46] - "00"
 
 ########################################################
+# TELEGRAMM TYPE: "32" AC>WIFI
+data = '3200'
+Telegram wird von WIFI angefragt, nach Rücksetzen erster telegramm
+
+data[0]   - "32" - Telegram Type
+data[1]   - "00"
+
+########################################################
 # TELEGRAMM TYPE: "33" AC>WIFI
-b'33040040000920190a00100014175b080800000000000000000400000d0000000000000000000000000000000000'
+data = '33040040000920190a00100014175b080800000000000000000400000d0000000000000000000000000000000000'
 Telegram wird von WIFI angefragt, jede 10 Sekunden
 
-data[0]  - "33" - Telegram Type
-data[1]  - "04" - wenn AC an, 00 wenn AC aus
-data[2]  - "00"
-data[3]  - "40"
-data[4]  - "00"
-data[5]  - "09"
-data[6]  - "20"
-data[7]  - "19"
-data[8]  - "0a" 
-data[9]  - "00"
+data[0]   - "33" - Telegram Type
+data[1]   - "04" - wenn AC an, 00 wenn AC aus
+data[2]   - "00"
+data[3]   - "40"
+data[4]   - "00"
+data[5]   - "09"
+data[6]   - "20"
+data[7]   - "19"
+data[8]   - "0a" 
+data[9]   - "00"
 data[10]  - "10"
 data[11]  - "00"
 data[12]  - "14"
@@ -215,7 +281,7 @@ data[45]  - "00"
      
 ################################################
 # TELEGRAMM TYPE: "34" AC>WIFI
-b'34040040001001084140004101000000000000000000000000000700000000000000000000000000000000000000'
+data = '34040040001001084140004101000000000000000000000000000700000000000000000000000000000000000000'
 Telegram wird von WIFI angefragt, jede 10 Sekunden
 
 data[0]   - "34" - Telegram Type
@@ -232,9 +298,9 @@ data[10]  - "00"
 data[11]  - Gas-Temperatur, offset minus 40
 data[12]  - "01" - unbekannt, Werte: 00, 07
 data[13]  - "00"
-data[14]  - "00" 
-data[15]  - "00" 
-data[16]  - "00" 
+data[14]  - "00"
+data[15]  - "00"
+data[16]  - "00"
 data[17]  - "00"
 data[18]  - "00"
 data[19]  - "00" 
@@ -268,7 +334,7 @@ data[45]  - "00"
 
 ########################################################
 # TELEGRAMM TYPE: "35" AC>WIFI
-b'350400400000000000000096000036373b0000000000000000000000000000000000000000000000000000000000'
+data = '350400400000000000000096000036373b0000000000000000000000000000000000000000000000000000000000'
 Telegram wird von WIFI angefragt, jede 10 Sekunden
  
 data[0]   - "35" - Telegram Type
@@ -317,3 +383,290 @@ data[42]  - "00"
 data[43]  - "00"  
 data[44]  - "00"  
 data[45]  - "00"  
+
+########################################################
+# TELEGRAMM TYPE: "01" WIFI>AC
+data = '010000000041e00a02000000000000000000000900000000001b0000000000000000000000000000000200000000'
+Telegram wird von WIFI gesendet, 3x pro Sekunde als abfrage, dient auch als befehl "af"
+
+data[0]   - "01" - Telegram Type
+data[1]   - "00"
+data[2]   - "00"  
+data[3]   - "00"
+data[4]   - Abfage oder Befehls-Telegramm
+              00 - Abfrage /Read
+              af - Befehl/Write Values          
+
+data[5]   - Mode und Fan speed, anlage on/off
+           bit 0, bit 1 - Fan Modus
+                 0 = auto
+                 1 = Speed 1
+                 2 = Speed 2
+                 3 = Speed 3
+           bit 2 - unbekannt
+           bit 3 - Sleep Function ON/OFF (nur bei Heizen und Kühlen möglich)
+           bit 4, bit 5, bit 6 - Modus
+                 0 = Auto
+                 1 = Kühlen
+                 2 = Entfeuchten
+                 3 = Lüften
+                 4 = Heizen
+           bit 7 - Inneneinheit ON/OFF
+            #"41" - unbekannt, nach rücksetzen 00
+
+data[6]  - Temperatur Vorgabe + onoff-Timer Zustand; 
+           wird Mode geändert, ändert es sich hier auch auf
+           den letzten Wert von jeweiligen Modus 
+               0x = 16°C
+               1x = 17°C
+               2x = 18°C
+               3x = 19°C
+               4x = 20°C
+               5x = 21°C
+               6x = 22°C
+               7x = 23°C
+               8x = 24°C
+               9x = 25°C
+               ax = 26°C
+               bx = 27°C
+               cx = 28°C
+               dx = 29°C
+               ex = 30°C
+            Funktioniert nicht richtig, nur inaktiv oder 0xc
+               x8 = timer aktiv 
+               x0 = timer inaktiv
+               
+               
+data[7]   - Status Turbo, Licht, Modus
+            bit 0 - Turbo ON / OFF
+            bit 1 - Display ON/OFF
+            bit 2 - Gesund/Tannenbaum ein/aus > schaltet die Klima auch ein/aus       
+            bit 3 - Verlängerte Ventilation, automatisch bei Heizbetrieb 
+            bit 4 - unbekannt
+            bit 5 - unbekannt
+            bit 6 - unbekannt
+            bit 7 - unbekannt
+            # "0a" - unbekannt, nach rücksetzen 00
+
+data[8]   - Fahrenheit/Celsius
+             bit 0 - unbekannt
+             bit 1 - unbekannt, immer 1
+             bit 2 - unbekannt
+             bit 3 - unbekannt
+             bit 4 - unbekannt
+             bit 5 - unbekannt
+             bit 6 - unbekannt
+             bit 7 - Celsius = 0; Fahrenheit = 1             
+            #"02" - unbekannt, nach rücksetzen 00
+
+data[9]  - Swing steuerung
+            bit 0, bit 1, bit 2, bit 3 - Vertical Swing Mode:
+                0 - stopped 
+                1 - bewegung ganzer bereich
+                2 - position 1 
+                3 - position 2
+                4 - position 3
+                5 - position 4
+                6 - position 5
+                # nicht bei jeder Anlage gleich  
+            bit 4, bit 5, bit 6, bit 7 - Vertical Swing Mode:
+                0 - stopped 
+                1 - bewegung ganzer bereich
+                2 - position oben 
+                3 - position mitte/oben 
+                4 - position mitte 
+                5 - position mitte/unten 
+                6 - position unten
+                7 - bewegung bereich unten
+                9  - bewegung bereich mitte
+                11 - bewegung bereich oben 
+                # nicht bei jeder Anlage gleich
+                  
+data[10]  - "00"  
+data[11]  - "00"
+
+data[12] - Frostschutz /Sparbetrieb
+             bit 0 - unbekannt
+             bit 1 - unbekannt
+             bit 2 - unbekannt
+             bit 3 - unbekannt
+             bit 4 - unbekannt
+             bit 5 - unbekannt
+             bit 6 - Frostschutz ON/OFF ( wird nur geheizt bei <7°C )
+                     # geht nur im Heizbetrieb
+                     # die Lüfter werden auf AUTO gestellt
+                     # wenn man es im Kühlbetrieb macht, ändert es zwar den Wert
+                     # hier, auf der Fernbedienung wird SE angezeigt, aber wohl
+                     # ohne weiteren Funktion
+                   - Sparbetrieb ON/OFF (nicht im Heizbetrieb)
+             bit 7 - unbekannt
+
+data[13] - Timer Coutner Byte1 (für on-Funktion)
+data[14] - Timer Counter Byte2 (für on, off und onoff), 80 - timer deaktiviert
+data[15] - Timer Counter Byte3 (für off-Funktion)
+           # diese 3 bytes sind schwierig zu entschlüsseln, scheinen als 2 Counter
+           # verteilt auf 3 bytes. Die Counter sind wohl relativ zu Schaltzeit,
+           # da wenn sogar 2tes mal die gleiche zeit abgespeichert wird, ändern
+           # sich die werte.
+
+data[16] - Timer aktivierung
+             bit 0 - unbekannt
+             bit 1 - unbekannt
+             bit 2 - unbekannt
+             bit 3 - unbekannt
+             bit 4 - timer on aktiv = 1
+             bit 5 - timer off aktiv = 1
+             bit 6 - unbekannt
+             bit 7 - unbekannt
+           # 00 - timer deaktiviert
+           # 10 - timer off aktiv
+           # 20 - timer on aktiv
+           # 30 - timer onoff aktiv
+
+data[17]  - "00" 
+data[18]  - "00" 
+data[19] - Lüfter Modus **) Beachte Bemerkungen unten
+              08 - auto
+              09 - Stufe 1
+              0b - Stufe 2
+              0d - Stufe 3
+data[20]  - "00" 
+data[21]  - "00" 
+data[22]  - "00" 
+data[23]  - "00" 
+data[24]  - "00" 
+data[25]  - "1b" - unbekannt
+data[26]  - "00" 
+data[27]  - "00" 
+data[28]  - "00" 
+data[29]  - "00" 
+data[30]  - "00" 
+data[31]  - "00" 
+data[32]  - "00" - nach rücksetzen c3
+data[33]  - "00" - nach rücksetzen 7f
+data[34]  - "00"  
+data[35]  - "00" 
+data[36]  - "00"  
+data[37]  - "00" 
+data[38]  - "00" 
+data[39]  - "00"  
+data[40]  - "00" - nach zurücksetzen wert 02
+data[41]  - "02" - nach zurücksetzen wert zuerst 00, dann 02
+data[42]  - "00" 
+data[43]  - "00"  
+data[44]  - "00"  
+data[45]  - "00" 
+
+**) Fan Speed - Beobachtete Änderung bei Senden der Lüfter Signale über WIFI
+           Data Byte:
+           [05] [07] [19]
+    1       91   02   09  
+    2       92   02   0A
+    3       92   02   0B
+    4       93   02   0C
+    5       93   02   0D
+    Stark   93   03   0D
+    Still   91   02   0D
+    Auto    90   02   08
+
+########################################################
+# TELEGRAMM TYPE: "03" WIFI>AC
+data = '0307000000000000000000007e780b09232d000000000001007f'
+Telegram wird von WIFI gesendet, jede 10 Sekunden
+
+data[0]   - "03" - Telegram Type
+data[1]   - "07" - andere Werte: 00, 04, 06, 01 (nach rücksetzen)
+data[2]   - "00"  
+data[3]   - "00"
+data[4]   - "00"  
+data[5]   - "00" 
+data[6]   - "00" 
+data[7]   - "00" 
+data[8]   - "00" 
+data[9]   - "00"  
+data[10]  - "00"  
+data[11]  - "00"
+data[12]  - "7e" - unbekannt, nach rücksetzen 7b
+data[13]  - "78" - unbekannt, nach rücksetzen 21 
+data[14]  - "0b" - unbekannt, nach rücksetzen 01
+data[15]  - "09" - ? counter Sekunden Byte 2, nach rücksetzen 00 
+data[16]  - "23" - ? counter Sekunden Byte 1, nach rücksetzen 00
+data[17]  - "2d" - ? counter Sekunden Byte 0, nach rücksetzen 00
+data[18]  - "00" 
+data[19]  - "00" 
+data[20]  - "00" 
+data[21]  - "00" 
+data[22]  - "00" 
+data[23]  - "01" - unbekannt, nach rücksetzen 03
+data[24]  - "00" 
+
+########################################################
+# TELEGRAMM TYPE: "02" WIFI>AC
+data = '020000000000000300281e19232300'
+Nach zurücksetzen 1 x gesendet - erster Telegramm 
+
+data[0]   - "02" - Telegram Type
+data[1]   - "00" 
+data[2]   - "00"  
+data[3]   - "00"
+data[4]   - "00"  
+data[5]   - "00" 
+data[6]   - "00" 
+data[7]   - "03" - unbekannt
+data[8]   - "00" 
+data[9]   - "28" - unbekannt
+data[10]  - "1e" - unbekannt
+data[11]  - "19" - unbekannt
+data[12]  - "23" - unbekannt
+data[13]  - "23" - unbekannt
+data[14]  - "00" 
+
+
+########################################################
+# TELEGRAMM TYPE: "04" WIFI>AC
+data = '040700000000000000000000'
+Nach zurücksetzen 1 x gesendet - zweiter Telegramm 
+
+data[0]   - "04" - Telegram Type
+data[1]   - "07" 
+data[2]   - "00"  
+data[3]   - "00"
+data[4]   - "00"  
+data[5]   - "00" 
+data[6]   - "00" 
+data[7]   - "00" 
+data[8]   - "00" 
+data[9]   - "00" 
+data[10]  - "00" 
+data[11]  - "00" 
+
+
+########################################################
+# TELEGRAMM TYPE: "0c" WIFI>AC
+data = '0c00006060606060606060000000000000000000000000000000000000000000000000000000000000000000000000'
+Nach zurücksetzen 1 x gesendet - 5te und 6te Telegramm 
+
+data[0]   - "0c" - Telegram Type
+data[1]   - "00" 
+data[2]   - "00"  
+data[3]   - "60"
+data[4]   - "60"  
+data[5]   - "60" 
+data[6]   - "60" 
+data[7]   - "60" 
+data[8]   - "60" 
+data[9]   - "60" 
+data[10]  - "60" 
+data[11:47]  - "00"
+
+########################################################
+# TELEGRAMM TYPE: "44" AC>WIFI
+data = '44010001000000000000000000000000000000000000000001'
+Telegram wird von WIFI angefragt, nach Rücksetzen zweiter telegramm
+
+data[0]   - "44" - Telegram Type
+data[1]   - "01" 
+data[2]   - "00"  
+data[3]   - "01" 
+data[4:24]  - "00"
+data[24]  - "01"
